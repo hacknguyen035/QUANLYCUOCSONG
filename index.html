@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="vi" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>LifeOS - Quản lý Đời sống & Tài chính Toàn diện</title>
+  
+  <!-- PWA Metadata -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#4f46e5">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="LifeOS">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+
+  <!-- TailwindCSS via CDN with dark mode config -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- External Libraries via CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col md:flex-row antialiased select-none">
+
+  <!-- ========================================================================= -->
+  <!-- 1. MASTER LOCK SCREEN MODAL (Web Crypto Security Overlay) -->
+  <!-- ========================================================================= -->
+  <div id="lock-screen-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md transition-all">
+    <div class="glass-panel w-full max-w-md p-6 sm:p-8 rounded-3xl border border-slate-700/60 shadow-2xl relative text-center">
+      
+      <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-tr from-indigo-600 to-emerald-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
+        <i data-lucide="shield-check" class="w-8 h-8"></i>
+      </div>
+
+      <h2 id="lock-screen-title" class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">LifeOS Security Vault</h2>
+      <p id="lock-screen-subtitle" class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-2 mb-6">Mã hóa AES-GCM 256-bit chuẩn quân đội. Dữ liệu chỉ được giải mã ngay trong bộ nhớ trình duyệt của bạn.</p>
+
+      <form id="lock-form" class="space-y-4 text-left">
+        <div>
+          <label class="block text-xs font-bold text-slate-400 mb-1.5 uppercase tracking-wider">Mật khẩu chính (Master Password)</label>
+          <div class="relative">
+            <input type="password" id="lock-password-input" required placeholder="Nhập mật khẩu của bạn..." 
+              class="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-sm">
+          </div>
+        </div>
+
+        <div id="lock-password-confirm-group" class="hidden">
+          <label class="block text-xs font-bold text-slate-400 mb-1.5 uppercase tracking-wider">Xác nhận mật khẩu chính</label>
+          <input type="password" id="lock-password-confirm-input" placeholder="Nhập lại mật khẩu để xác nhận..." 
+            class="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-sm">
+        </div>
+
+        <div id="lock-error-msg" class="hidden text-xs font-semibold text-rose-500 bg-rose-500/10 p-2.5 rounded-xl border border-rose-500/20 text-center"></div>
+
+        <button type="submit" id="lock-submit-btn" class="w-full py-3.5 px-4 rounded-xl font-bold text-sm bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center gap-2">
+          <i data-lucide="unlock" class="w-4 h-4"></i>
+          <span>Mở khóa LifeOS</span>
+        </button>
+      </form>
+
+      <div class="mt-6 pt-5 border-t border-slate-200 dark:border-slate-800 flex items-center justify-center gap-4 text-[11px] text-slate-400">
+        <span class="flex items-center gap-1"><i data-lucide="lock" class="w-3.5 h-3.5 text-emerald-500"></i> Zero-Knowledge</span>
+        <span class="flex items-center gap-1"><i data-lucide="cpu" class="w-3.5 h-3.5 text-indigo-500"></i> Web Crypto API</span>
+        <span class="flex items-center gap-1"><i data-lucide="hard-drive" class="w-3.5 h-3.5 text-amber-500"></i> 100% Local</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- 2. DESKTOP SIDEBAR NAVIGATION -->
+  <!-- ========================================================================= -->
+  <aside class="hidden md:flex flex-col w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 p-5 shrink-0 justify-between">
+    <div>
+      <!-- App Brand -->
+      <div class="flex items-center gap-3 px-2 py-3 mb-6">
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-600 to-emerald-500 flex items-center justify-center text-white shadow-md shadow-indigo-500/30 font-black text-lg">
+          L
+        </div>
+        <div>
+          <h1 class="font-extrabold text-lg text-slate-900 dark:text-white leading-tight">LifeOS</h1>
+          <p class="text-[10px] text-emerald-500 font-semibold tracking-wider uppercase">AES-256 Protected</p>
+        </div>
+      </div>
+
+      <!-- Navigation Links -->
+      <nav class="space-y-1.5">
+        <a href="#dashboard" data-tab="dashboard" class="sidebar-nav-link flex items-center gap-3 px-4 py-3 rounded-xl font-semibold bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 transition-all">
+          <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+          <span>Tổng quan</span>
+        </a>
+        <a href="#finance" data-tab="finance" class="sidebar-nav-link flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
+          <i data-lucide="wallet" class="w-5 h-5"></i>
+          <span>Tài chính & Ví</span>
+        </a>
+        <a href="#tasks" data-tab="tasks" class="sidebar-nav-link flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
+          <i data-lucide="check-square" class="w-5 h-5"></i>
+          <span>Công việc & Lịch</span>
+        </a>
+        <a href="#habits" data-tab="habits" class="sidebar-nav-link flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
+          <i data-lucide="flame" class="w-5 h-5"></i>
+          <span>Thói quen & Sức khỏe</span>
+        </a>
+        <a href="#notes" data-tab="notes" class="sidebar-nav-link flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
+          <i data-lucide="sticky-note" class="w-5 h-5"></i>
+          <span>Sổ tay & Mua sắm</span>
+        </a>
+        <a href="#settings" data-tab="settings" class="sidebar-nav-link flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
+          <i data-lucide="shield" class="w-5 h-5"></i>
+          <span>Bảo mật & Sao lưu</span>
+        </a>
+      </nav>
+    </div>
+
+    <!-- Quick SMS Parser Button & Status -->
+    <div class="space-y-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+      <button onclick="LifeApp.openSMSParserModal()" class="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-xs shadow-md shadow-emerald-600/20 transition-all">
+        <i data-lucide="sparkles" class="w-4 h-4"></i>
+        <span>Dán SMS Ngân hàng</span>
+      </button>
+
+      <div class="flex items-center justify-between text-xs text-slate-400 px-1">
+        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> An toàn</span>
+        <button onclick="LifeStorage.lock()" class="text-rose-500 hover:underline font-medium">Khóa ngay</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ========================================================================= -->
+  <!-- 3. MAIN CONTENT AREA & HEADER -->
+  <!-- ========================================================================= -->
+  <div id="main-content" class="flex-1 flex flex-col min-h-screen pb-safe md:pb-8 overflow-y-auto">
+    
+    <!-- Top Global Header -->
+    <header class="sticky top-0 z-30 glass-panel border-b border-slate-200/80 dark:border-slate-800/80 px-4 sm:px-8 py-3.5 flex items-center justify-between">
+      <div>
+        <h2 id="header-greeting" class="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white">Chào buổi sáng ☀️</h2>
+        <p id="header-date-ticker" class="text-xs text-slate-500 dark:text-slate-400 font-medium">Hôm nay</p>
+      </div>
+
+      <div class="flex items-center gap-2 sm:gap-3">
+        <!-- Quick SMS Trigger (Mobile & Desktop) -->
+        <button onclick="LifeApp.openSMSParserModal()" title="Dán tin nhắn SMS ngân hàng" class="sm:hidden p-2 rounded-xl bg-emerald-600 text-white shadow-sm">
+          <i data-lucide="sparkles" class="w-4 h-4"></i>
+        </button>
+
+        <!-- Balance Visibility Toggle -->
+        <button id="btn-toggle-balance" title="Ẩn/Hiện số dư" class="p-2 sm:px-3 sm:py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors flex items-center gap-1.5 text-xs font-semibold">
+          <i data-lucide="eye" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">Số dư</span>
+        </button>
+
+        <!-- Theme Toggle -->
+        <button id="btn-toggle-theme" title="Đổi giao diện Tối/Sáng" class="p-2 sm:px-3 sm:py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors flex items-center gap-1.5 text-xs font-semibold">
+          <i data-lucide="moon" class="w-4 h-4 dark:hidden"></i>
+          <i data-lucide="sun" class="w-4 h-4 hidden dark:inline"></i>
+        </button>
+
+        <!-- Quick Lock Button -->
+        <button id="btn-quick-lock" title="Khóa ứng dụng ngay lập tức" class="p-2 sm:px-3 sm:py-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-rose-600 dark:text-rose-400 transition-colors flex items-center gap-1.5 text-xs font-bold border border-rose-200/50 dark:border-rose-900/40">
+          <i data-lucide="lock" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">Khóa</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Urgent Bill Alert Container (Dynamically rendered) -->
+    <div class="px-4 sm:px-8 pt-4">
+      <div id="dash-urgent-bills-alert" class="hidden"></div>
+    </div>
+
+    <!-- ======================================================================= -->
+    <!-- TAB VIEW 1: DASHBOARD -->
+    <!-- ======================================================================= -->
+    <div id="view-dashboard" class="tab-view px-4 sm:px-8 py-4 space-y-6 animate-fade-scale">
+      
+      <!-- Top Financial Snapshot Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Total Balance -->
+        <div class="p-5 rounded-3xl bg-gradient-to-br from-indigo-600 to-indigo-800 text-white shadow-xl shadow-indigo-600/20 relative overflow-hidden">
+          <div class="absolute right-0 bottom-0 translate-x-3 translate-y-3 opacity-10">
+            <i data-lucide="wallet" class="w-32 h-32"></i>
+          </div>
+          <span class="text-xs font-semibold text-indigo-200 uppercase tracking-wider block mb-1">Tổng tài sản các ví</span>
+          <h3 id="dash-total-balance" class="text-2xl sm:text-3xl font-black tracking-tight mb-3">0 ₫</h3>
+          <div class="flex items-center justify-between text-xs text-indigo-100/90 pt-2 border-t border-indigo-500/40">
+            <span>Dòng tiền ròng:</span>
+            <span id="dash-net-flow" class="font-bold">+0 ₫</span>
+          </div>
+        </div>
+
+        <!-- Monthly Income -->
+        <div class="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Thu nhập tháng này</span>
+            <div class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+              <i data-lucide="trending-up" class="w-4 h-4"></i>
+            </div>
+          </div>
+          <h3 id="dash-month-income" class="text-xl sm:text-2xl font-black text-emerald-500">+0 ₫</h3>
+          <p class="text-xs text-slate-400 mt-2">Dựa trên các khoản thu đã ghi</p>
+        </div>
+
+        <!-- Monthly Expense -->
+        <div class="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Chi tiêu tháng này</span>
+            <div class="w-8 h-8 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center">
+              <i data-lucide="trending-down" class="w-4 h-4"></i>
+            </div>
+          </div>
+          <h3 id="dash-month-expense" class="text-xl sm:text-2xl font-black text-rose-500">-0 ₫</h3>
+          <p class="text-xs text-slate-400 mt-2">Bao gồm hóa đơn & tiêu dùng</p>
+        </div>
+
+        <!-- Smart SMS Quick Action Card -->
+        <div class="p-5 rounded-3xl bg-gradient-to-br from-emerald-600 to-teal-700 text-white shadow-xl shadow-emerald-600/20 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center gap-2 mb-2">
+              <i data-lucide="sparkles" class="w-5 h-5"></i>
+              <span class="text-xs font-bold uppercase tracking-wider">Smart SMS Parser</span>
+            </div>
+            <p class="text-xs text-emerald-100">Bóc tách tự động biến động số dư Vietcombank, Techcombank, MB...</p>
+          </div>
+          <button onclick="LifeApp.openSMSParserModal()" class="mt-4 w-full py-2.5 px-3 rounded-xl bg-white/20 hover:bg-white/30 text-white font-bold text-xs backdrop-blur-sm transition-all flex items-center justify-center gap-2">
+            <span>Dán tin nhắn ngay</span>
+            <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Middle Grid: Wallets + Habits Snapshot -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Wallets snapshot -->
+        <div class="lg:col-span-1 p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm">
+          <div class="flex items-center justify-between mb-4">
+            <h4 class="font-extrabold text-slate-900 dark:text-white text-base">Ví & Ngân hàng</h4>
+            <button onclick="LifeApp.switchTab('finance')" class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">Quản lý ví &rarr;</button>
+          </div>
+          <div id="dash-wallets-list" class="space-y-2.5">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <!-- Habits Today snapshot -->
+        <div class="lg:col-span-2 p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm">
+          <div class="flex items-center justify-between mb-3">
+            <h4 class="font-extrabold text-slate-900 dark:text-white text-base">Tiến độ Thói quen & Sức khỏe</h4>
+            <span class="text-xs text-slate-400">Duy trì streak liên tục</span>
+          </div>
+          <div id="dash-habits-snapshot">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Grid: Today Tasks -->
+      <div class="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+          <h4 class="font-extrabold text-slate-900 dark:text-white text-base">Việc cần làm hôm nay</h4>
+          <button onclick="LifeApp.openAddTaskModal()" class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-sm">
+            + Thêm việc mới
+          </button>
+        </div>
+        <div id="dash-today-tasks">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ======================================================================= -->
+    <!-- TAB VIEW 2: FINANCE & SMART BANKING -->
+    <!-- ======================================================================= -->
+    <div id="view-finance" class="tab-view hidden px-4 sm:px-8 py-4 space-y-6 animate-fade-scale">
+      
+      <!-- Top Actions Bar -->
+      <div class="flex flex-wrap items-center justify-between gap-3 p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm">
+        <div class="flex items-center gap-2">
+          <button onclick="LifeApp.openSMSParserModal()" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold text-xs shadow-md shadow-emerald-600/20 hover:scale-[1.02] transition-all">
+            <i data-lucide="sparkles" class="w-4 h-4"></i>
+            <span>Dán SMS Ngân hàng</span>
+          </button>
+          <button onclick="LifeApp.openStatementModal()" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs transition-all">
+            <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-500"></i>
+            <span>Nhập Sao Kê (Excel / CSV)</span>
+          </button>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="LifeApp.openAddTransactionModal()" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md shadow-indigo-600/20 transition-all">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            <span>Ghi thu / chi mới</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Wallets Grid -->
+      <div>
+        <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3">Danh sách Ví & Tài khoản ngân hàng</h3>
+        <div id="finance-wallets-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+
+      <!-- Charts Row -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Expense Categories Doughnut -->
+        <div class="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm">
+          <h4 class="font-extrabold text-slate-900 dark:text-white text-base mb-1">Cơ cấu Chi tiêu Tháng này</h4>
+          <p class="text-xs text-slate-400 mb-4">Tự động phân loại dựa trên nội dung giao dịch</p>
+          <div class="h-64 relative">
+            <canvas id="chart-expense-categories"></canvas>
+          </div>
+        </div>
+
+        <!-- Monthly Cash Flow Bar -->
+        <div class="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm">
+          <h4 class="font-extrabold text-slate-900 dark:text-white text-base mb-1">Dòng tiền Thu & Chi (6 tháng)</h4>
+          <p class="text-xs text-slate-400 mb-4">So sánh tổng thu và tổng chi thực tế</p>
+          <div class="h-64 relative">
+            <canvas id="chart-cash-flow"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Transactions History Table -->
+      <div class="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+          <div>
+            <h4 class="font-extrabold text-slate-900 dark:text-white text-base">Lịch sử Giao dịch</h4>
+            <p class="text-xs text-slate-400">Tất cả biến động số dư đã ghi nhận</p>
+          </div>
+
+          <!-- Filters -->
+          <div class="flex flex-wrap items-center gap-2">
+            <select id="filter-tx-type" onchange="LifeApp.renderTransactionsList()" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 focus:outline-none">
+              <option value="all">Tất cả loại</option>
+              <option value="expense">Khoản chi (-)</option>
+              <option value="income">Khoản thu (+)</option>
+            </select>
+            <select id="filter-tx-wallet" onchange="LifeApp.renderTransactionsList()" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 focus:outline-none">
+              <option value="all">Tất cả ví</option>
+            </select>
+            <input type="text" id="search-tx-query" oninput="LifeApp.renderTransactionsList()" placeholder="Tìm nội dung..." 
+              class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 focus:outline-none">
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="border-b border-slate-200 dark:border-slate-800 text-slate-400 text-[11px] uppercase font-bold tracking-wider">
+                <th class="py-2.5 px-4">Thời gian</th>
+                <th class="py-2.5 px-4">Ví / Bank</th>
+                <th class="py-2.5 px-4">Danh mục</th>
+                <th class="py-2.5 px-4">Nội dung</th>
+                <th class="py-2.5 px-4 text-right">Số tiền</th>
+                <th class="py-2.5 px-4 text-right">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody id="finance-transactions-tbody">
+              <!-- Rendered by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ======================================================================= -->
+    <!-- TAB VIEW 3: TASKS & EISENHOWER PLANNER & BILLS -->
+    <!-- ======================================================================= -->
+    <div id="view-tasks" class="tab-view hidden px-4 sm:px-8 py-4 space-y-6 animate-fade-scale">
+      
+      <!-- Subviews navigation -->
+      <div class="flex items-center justify-between flex-wrap gap-3">
+        <div class="flex items-center gap-1.5 p-1 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm">
+          <button data-subview="list" onclick="LifeApp.switchTasksSubView('list')" class="task-subtab-btn px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-sm">
+            Danh sách công việc
+          </button>
+          <button data-subview="matrix" onclick="LifeApp.switchTasksSubView('matrix')" class="task-subtab-btn px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+            Ma trận Eisenhower (4 Góc)
+          </button>
+          <button data-subview="bills" onclick="LifeApp.switchTasksSubView('bills')" class="task-subtab-btn px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+            Hóa đơn định kỳ
+          </button>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="LifeApp.openAddTaskModal()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm transition-all flex items-center gap-1.5">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            <span>Thêm việc mới</span>
+          </button>
+          <button onclick="LifeApp.openAddBillModal()" class="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-sm transition-all flex items-center gap-1.5">
+            <i data-lucide="receipt" class="w-4 h-4"></i>
+            <span>Thêm hóa đơn</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Subview A: List -->
+      <div id="tasks-view-list" class="space-y-3">
+        <div id="tasks-items-container" class="space-y-2.5">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+
+      <!-- Subview B: Eisenhower Matrix -->
+      <div id="tasks-view-matrix" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Q1: Urgent & Important -->
+        <div class="p-5 rounded-3xl bg-rose-500/5 border-2 border-rose-500/30">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider">Khẩn cấp & Quan trọng (Làm ngay)</span>
+            <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+          </div>
+          <div id="matrix-q1" class="space-y-2"></div>
+        </div>
+
+        <!-- Q2: Important Not Urgent -->
+        <div class="p-5 rounded-3xl bg-blue-500/5 border-2 border-blue-500/30">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">Quan trọng, Không khẩn cấp (Lên kế hoạch)</span>
+            <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+          </div>
+          <div id="matrix-q2" class="space-y-2"></div>
+        </div>
+
+        <!-- Q3: Urgent Not Important -->
+        <div class="p-5 rounded-3xl bg-amber-500/5 border-2 border-amber-500/30">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">Khẩn cấp, Không quan trọng (Ủy quyền)</span>
+            <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+          </div>
+          <div id="matrix-q3" class="space-y-2"></div>
+        </div>
+
+        <!-- Q4: Not Urgent Not Important -->
+        <div class="p-5 rounded-3xl bg-slate-500/5 border-2 border-slate-500/30">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Không khẩn cấp, Không quan trọng (Loại bỏ)</span>
+            <span class="w-2.5 h-2.5 rounded-full bg-slate-500"></span>
+          </div>
+          <div id="matrix-q4" class="space-y-2"></div>
+        </div>
+      </div>
+
+      <!-- Subview C: Recurring Bills -->
+      <div id="tasks-view-bills" class="hidden space-y-4">
+        <div class="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-800 dark:text-amber-300">
+          💡 <strong>Nhắc lịch đóng tiền định kỳ:</strong> Tự động tính số ngày còn lại đến hạn đóng tiền điện, nước, internet, thẻ tín dụng. Bấm "Xác nhận đã trả" sẽ tự động đồng bộ sang Sổ Chi tiêu!
+        </div>
+        <div id="bills-items-container" class="space-y-3">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ======================================================================= -->
+    <!-- TAB VIEW 4: HABITS & HEALTH TRACKER -->
+    <!-- ======================================================================= -->
+    <div id="view-habits" class="tab-view hidden px-4 sm:px-8 py-4 space-y-6 animate-fade-scale">
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-lg font-extrabold text-slate-900 dark:text-white">Theo dõi Thói quen & Sức khỏe</h3>
+          <p class="text-xs text-slate-400">Xây dựng lối sống kỷ luật với chuỗi ngày liên tục (Streaks)</p>
+        </div>
+        <button onclick="LifeApp.openAddHabitModal()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm transition-all flex items-center gap-1.5">
+          <i data-lucide="plus" class="w-4 h-4"></i>
+          <span>Thêm thói quen</span>
+        </button>
+      </div>
+
+      <div id="habits-grid-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <!-- Rendered by JS -->
+      </div>
+    </div>
+
+    <!-- ======================================================================= -->
+    <!-- TAB VIEW 5: NOTES & SHOPPING CHECKLIST -->
+    <!-- ======================================================================= -->
+    <div id="view-notes" class="tab-view hidden px-4 sm:px-8 py-4 space-y-6 animate-fade-scale">
+      <div class="flex items-center justify-between flex-wrap gap-3">
+        <div class="flex items-center gap-1.5 p-1 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm">
+          <button data-subview="notes" onclick="LifeApp.switchNotesSubView('notes')" class="notes-subtab-btn px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-sm">
+            Sổ tay ghi chú
+          </button>
+          <button data-subview="shopping" onclick="LifeApp.switchNotesSubView('shopping')" class="notes-subtab-btn px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+            Danh sách đồ cần mua (Shopping)
+          </button>
+        </div>
+
+        <div>
+          <button id="btn-add-note-context" onclick="LifeApp.openAddNoteModal()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm transition-all flex items-center gap-1.5">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            <span>Thêm mới</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Subview A: Notes -->
+      <div id="notes-view-content" class="space-y-4">
+        <div id="notes-grid-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+
+      <!-- Subview B: Shopping List -->
+      <div id="shopping-view-content" class="hidden space-y-4">
+        <div id="shopping-summary-bar"></div>
+        <div class="flex items-center justify-between">
+          <h4 class="text-sm font-bold text-slate-400 uppercase tracking-wider">Các món đồ cần mua</h4>
+          <button onclick="LifeApp.openAddShoppingModal()" class="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline">
+            + Thêm đồ mua sắm
+          </button>
+        </div>
+        <div id="shopping-items-container" class="space-y-2.5">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================================= -->
+    <!-- TAB VIEW 6: SETTINGS, BACKUP & SECURITY -->
+    <!-- ======================================================================= -->
+    <div id="view-settings" class="tab-view hidden px-4 sm:px-8 py-4 space-y-6 animate-fade-scale">
+      <div>
+        <h3 class="text-lg font-extrabold text-slate-900 dark:text-white">Bảo mật & Quản lý Dữ liệu Cá nhân</h3>
+        <p class="text-xs text-slate-400">Kiến trúc Zero-Knowledge 100% Client-side • Web Crypto API</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <!-- Backup & Sync Section -->
+        <div class="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center font-bold">
+              <i data-lucide="download-cloud" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h4 class="font-bold text-slate-900 dark:text-white text-base">Đồng bộ & Chống mất dữ liệu</h4>
+              <p class="text-xs text-slate-400">Xuất hoặc khôi phục file sao lưu đã mã hóa</p>
+            </div>
+          </div>
+
+          <div class="space-y-2.5 pt-2">
+            <button onclick="LifeApp.exportBackup()" class="w-full py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-sm">
+              <i data-lucide="download" class="w-4 h-4"></i>
+              <span>Xuất file Sao lưu Đã Mã Hóa (.enc)</span>
+            </button>
+
+            <button onclick="LifeApp.triggerImportBackup()" class="w-full py-3 px-4 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition-all flex items-center justify-center gap-2">
+              <i data-lucide="upload" class="w-4 h-4"></i>
+              <span>Khôi phục dữ liệu từ file (.enc)</span>
+            </button>
+
+            <button onclick="LifeApp.triggerAutoSaveDisk()" class="w-full py-3 px-4 rounded-xl border border-indigo-500/40 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 text-xs font-bold transition-all flex items-center justify-center gap-2">
+              <i data-lucide="hard-drive" class="w-4 h-4"></i>
+              <span>Tự động lưu vào file máy tính (File System Access)</span>
+            </button>
+          </div>
+
+          <p class="text-[11px] text-slate-400 pt-2">
+            Lần sao lưu gần nhất: <strong id="settings-last-backup" class="text-slate-600 dark:text-slate-200">Chưa có</strong>
+          </p>
+        </div>
+
+        <!-- Master Password & Auto Lock -->
+        <div class="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center font-bold">
+              <i data-lucide="key" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h4 class="font-bold text-slate-900 dark:text-white text-base">Khóa & Mật khẩu chính</h4>
+              <p class="text-xs text-slate-400">Kiểm soát thời gian khóa và bảo vệ dữ liệu</p>
+            </div>
+          </div>
+
+          <div class="space-y-4 pt-2">
+            <div>
+              <label class="block text-xs font-bold text-slate-400 mb-1.5 uppercase">Tự động khóa sau khi không thao tác</label>
+              <select id="settings-autolock-select" onchange="LifeApp.handleAutoLockChange(this.value)" class="w-full px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none">
+                <option value="1">1 phút</option>
+                <option value="3">3 phút</option>
+                <option value="5">5 phút (Khuyên dùng)</option>
+                <option value="15">15 phút</option>
+                <option value="0">Không tự động khóa</option>
+              </select>
+            </div>
+
+            <button onclick="LifeApp.handleChangeMasterPassword()" class="w-full py-3 px-4 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition-all flex items-center justify-center gap-2">
+              <i data-lucide="lock" class="w-4 h-4"></i>
+              <span>Đổi Master Password</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Security Info & Wipe Data -->
+      <div class="p-6 rounded-3xl bg-rose-500/5 border border-rose-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h4 class="font-bold text-rose-600 dark:text-rose-400 text-sm">Xóa sạch toàn bộ dữ liệu (Wipe Data)</h4>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Xóa vĩnh viễn kho mã hóa trong trình duyệt này. Hãy chắc chắn bạn đã tải file sao lưu .enc trước khi bấm.</p>
+        </div>
+        <button onclick="LifeApp.handleWipeAllData()" class="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-all shadow-sm shrink-0">
+          Xóa toàn bộ
+        </button>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- 4. MOBILE BOTTOM NAVIGATION BAR -->
+  <!-- ========================================================================= -->
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 glass-panel border-t border-slate-200/80 dark:border-slate-800/80 bottom-nav-safe z-40 px-3 py-2 flex items-center justify-around">
+    <a href="#dashboard" data-tab="dashboard" class="bottom-nav-link flex flex-col items-center justify-center text-xs font-semibold text-indigo-600 dark:text-indigo-400">
+      <i data-lucide="layout-dashboard" class="w-5 h-5 mb-0.5"></i>
+      <span>Tổng quan</span>
+    </a>
+    <a href="#finance" data-tab="finance" class="bottom-nav-link flex flex-col items-center justify-center text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-indigo-600">
+      <i data-lucide="wallet" class="w-5 h-5 mb-0.5"></i>
+      <span>Tài chính</span>
+    </a>
+    <a href="#tasks" data-tab="tasks" class="bottom-nav-link flex flex-col items-center justify-center text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-indigo-600">
+      <i data-lucide="check-square" class="w-5 h-5 mb-0.5"></i>
+      <span>Việc cần làm</span>
+    </a>
+    <a href="#habits" data-tab="habits" class="bottom-nav-link flex flex-col items-center justify-center text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-indigo-600">
+      <i data-lucide="flame" class="w-5 h-5 mb-0.5"></i>
+      <span>Thói quen</span>
+    </a>
+    <a href="#notes" data-tab="notes" class="bottom-nav-link flex flex-col items-center justify-center text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-indigo-600">
+      <i data-lucide="sticky-note" class="w-5 h-5 mb-0.5"></i>
+      <span>Sổ tay</span>
+    </a>
+  </nav>
+
+  <!-- ========================================================================= -->
+  <!-- 5. MODALS & OVERLAYS -->
+  <!-- ========================================================================= -->
+
+  <!-- Modal: Smart SMS Parser -->
+  <div id="modal-sms-parser" class="modal-backdrop fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+    <div class="glass-panel w-full max-w-lg p-6 rounded-3xl border border-slate-700/60 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+            <i data-lucide="sparkles" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-base text-slate-900 dark:text-white">Smart SMS / Notification Parser</h3>
+            <p class="text-xs text-slate-400">Bóc tách tin nhắn biến động số dư ngân hàng</p>
+          </div>
+        </div>
+        <button class="btn-close-modal p-2 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-slate-800">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Quick sample test buttons -->
+      <div class="mb-3">
+        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Thử nhanh tin nhắn mẫu:</span>
+        <div class="flex flex-wrap gap-1.5">
+          <button onclick="LifeApp.loadSampleSMS('vcb')" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:bg-indigo-500 hover:text-white transition-all">Vietcombank (-150k)</button>
+          <button onclick="LifeApp.loadSampleSMS('tcb')" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:bg-indigo-500 hover:text-white transition-all">Techcombank (+15tr)</button>
+          <button onclick="LifeApp.loadSampleSMS('mb')" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:bg-indigo-500 hover:text-white transition-all">MBBank (-35k)</button>
+          <button onclick="LifeApp.loadSampleSMS('acb')" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:bg-indigo-500 hover:text-white transition-all">ACB (-120k)</button>
+          <button onclick="LifeApp.loadSampleSMS('bidv')" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:bg-indigo-500 hover:text-white transition-all">BIDV (-650k)</button>
+        </div>
+      </div>
+
+      <!-- Input textarea with 1-tap clipboard paste -->
+      <div class="mb-4">
+        <div class="flex items-center justify-between mb-1.5">
+          <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Nội dung tin nhắn:</label>
+          <button type="button" onclick="LifeApp.pasteFromClipboard()" class="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 font-bold text-xs hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-all">
+            <i data-lucide="clipboard-paste" class="w-3.5 h-3.5"></i>
+            <span>Dán từ bộ nhớ tạm (1 chạm)</span>
+          </button>
+        </div>
+        <textarea id="sms-raw-input" rows="4" placeholder="Dán nội dung tin nhắn SMS hoặc thông báo biến động số dư tại đây..." 
+          class="w-full p-3.5 rounded-2xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"></textarea>
+        <button onclick="LifeApp.executeSMSParse()" class="mt-2 w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-2">
+          <i data-lucide="scan" class="w-4 h-4"></i>
+          <span>Bóc tách thông tin</span>
+        </button>
+      </div>
+
+      <!-- Parsed Result Card -->
+      <div id="sms-parse-result" class="hidden p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700 space-y-3">
+        <div class="flex items-center justify-between">
+          <span id="sms-res-bank" class="text-xs font-bold text-indigo-500 uppercase tracking-wider">Vietcombank</span>
+          <span id="sms-res-type" class="text-xs font-bold px-2 py-0.5 rounded-full">Chi tiêu (-)</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-slate-400">Số tiền biến động:</span>
+          <span id="sms-res-amount" class="text-xl font-black">0 ₫</span>
+        </div>
+        <div class="flex items-center justify-between text-xs text-slate-500">
+          <span>Thời gian:</span>
+          <span id="sms-res-date" class="font-medium text-slate-300">--:--</span>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold text-slate-400 mb-1">Nội dung ghi chú:</label>
+          <input type="text" id="sms-res-desc" class="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700">
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-400 mb-1">Tự động phân loại:</label>
+            <select id="sms-res-category" class="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700"></select>
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-400 mb-1">Cập nhật vào Ví:</label>
+            <select id="sms-target-wallet" class="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700"></select>
+          </div>
+        </div>
+
+        <button id="sms-btn-confirm" onclick="LifeApp.confirmSMSParsedTransaction()" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-600/30 transition-all flex items-center justify-center gap-2">
+          <i data-lucide="check" class="w-4 h-4"></i>
+          <span>Xác nhận & Cập nhật số dư ví</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Modal: Statement Excel/CSV Import -->
+  <div id="modal-statement-import" class="modal-backdrop fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+    <div class="glass-panel w-full max-w-2xl p-6 rounded-3xl border border-slate-700/60 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+            <i data-lucide="file-spreadsheet" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-base text-slate-900 dark:text-white">Nhập Sao Kê Ngân Hàng (Excel / CSV)</h3>
+            <p class="text-xs text-slate-400">Đọc và tự động phân loại hàng loạt giao dịch ngay trên trình duyệt</p>
+          </div>
+        </div>
+        <button class="btn-close-modal p-2 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-slate-800">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Drop Zone -->
+      <div id="statement-drop-zone" onclick="document.getElementById('statement-file-input').click()" 
+        class="border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-400 rounded-2xl p-8 text-center cursor-pointer transition-all mb-4">
+        <i data-lucide="upload-cloud" class="w-10 h-10 mx-auto text-indigo-500 mb-2"></i>
+        <p class="text-sm font-bold text-slate-700 dark:text-slate-200">Kéo thả file sao kê (.xlsx, .xls, .csv) vào đây</p>
+        <p class="text-xs text-slate-400 mt-1">Hoặc bấm để duyệt file từ máy tính / điện thoại</p>
+      </div>
+
+      <div class="flex items-center justify-between mb-4">
+        <div class="w-1/2 pr-2">
+          <label class="block text-xs font-bold text-slate-400 mb-1">Ví nhận giao dịch:</label>
+          <select id="statement-target-wallet" class="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-700"></select>
+        </div>
+        <div class="text-right">
+          <span id="statement-count-badge" class="text-xs font-bold text-indigo-500"></span>
+        </div>
+      </div>
+
+      <!-- Preview container -->
+      <div id="statement-preview-container" class="hidden space-y-4">
+        <div class="max-h-60 overflow-y-auto border border-slate-200 dark:border-slate-800 rounded-xl">
+          <table class="w-full text-left border-collapse">
+            <thead class="sticky top-0 bg-slate-100 dark:bg-slate-800 text-[11px] text-slate-400 uppercase font-bold">
+              <tr>
+                <th class="p-2 text-center w-8">Chọn</th>
+                <th class="p-2">Ngày</th>
+                <th class="p-2">Nội dung</th>
+                <th class="p-2">Danh mục</th>
+                <th class="p-2 text-right">Số tiền</th>
+              </tr>
+            </thead>
+            <tbody id="statement-preview-tbody"></tbody>
+          </table>
+        </div>
+
+        <button onclick="LifeApp.commitStatementImport()" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-600/30 transition-all flex items-center justify-center gap-2">
+          <i data-lucide="check-check" class="w-4 h-4"></i>
+          <span>Nhập tất cả giao dịch đã chọn</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Modal: Add / Edit Wallet -->
+  <div id="modal-wallet" class="modal-backdrop fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+    <div class="glass-panel w-full max-w-md p-6 rounded-3xl border border-slate-700/60 shadow-2xl relative">
+      <div class="flex items-center justify-between mb-4">
+        <h3 id="modal-wallet-title" class="font-extrabold text-base text-slate-900 dark:text-white">Thêm Ví / Ngân hàng</h3>
+        <button class="btn-close-modal p-2 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-slate-800">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <form onsubmit="LifeApp.saveWalletForm(event)" class="space-y-4 text-xs font-semibold">
+        <input type="hidden" id="wallet-edit-id">
+        <div>
+          <label class="block text-slate-400 mb-1">Tên ví / Ngân hàng</label>
+          <input type="text" id="wallet-name-input" required placeholder="VD: Vietcombank, Techcombank, Tiền mặt..." 
+            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-400 mb-1">Mã ngân hàng (Viết tắt)</label>
+            <select id="wallet-bank-select" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white">
+              <option value="VCB">Vietcombank</option>
+              <option value="TCB">Techcombank</option>
+              <option value="MB">MBBank</option>
+              <option value="ACB">ACB</option>
+              <option value="BIDV">BIDV</option>
+              <option value="CTG">VietinBank</option>
+              <option value="VPB">VPBank</option>
+              <option value="TPB">TPBank</option>
+              <option value="MOMO">MoMo</option>
+              <option value="CASH">Tiền mặt</option>
+              <option value="OTHER">Khác</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Màu nhận diện</label>
+            <input type="color" id="wallet-color-input" value="#10b981" class="w-full h-10 p-1 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 cursor-pointer">
+          </div>
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1">Số dư ban đầu (₫)</label>
+          <input type="number" id="wallet-balance-input" required placeholder="0" 
+            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-mono">
+        </div>
+        <button type="submit" class="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition-all shadow-md shadow-indigo-600/30">
+          Lưu Ví
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Add Manual Transaction -->
+  <div id="modal-transaction" class="modal-backdrop fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+    <div class="glass-panel w-full max-w-md p-6 rounded-3xl border border-slate-700/60 shadow-2xl relative">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-extrabold text-base text-slate-900 dark:text-white">Ghi Thu / Chi Mới</h3>
+        <button class="btn-close-modal p-2 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-slate-800">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <form onsubmit="LifeApp.saveTransactionForm(event)" class="space-y-4 text-xs font-semibold">
+        <!-- Type switch -->
+        <div class="grid grid-cols-2 gap-2 p-1 rounded-2xl bg-slate-100 dark:bg-slate-900">
+          <label class="flex items-center justify-center gap-2 py-2 rounded-xl cursor-pointer has-[:checked]:bg-rose-500 has-[:checked]:text-white text-slate-600 dark:text-slate-400 transition-all font-bold">
+            <input type="radio" name="tx-type" value="expense" checked class="hidden">
+            <span>Chi tiêu (-)</span>
+          </label>
+          <label class="flex items-center justify-center gap-2 py-2 rounded-xl cursor-pointer has-[:checked]:bg-emerald-500 has-[:checked]:text-white text-slate-600 dark:text-slate-400 transition-all font-bold">
+            <input type="radio" name="tx-type" value="income" class="hidden">
+            <span>Thu nhập (+)</span>
+          </label>
+        </div>
+
+        <div>
+          <label class="block text-slate-400 mb-1">Số tiền (₫)</label>
+          <input type="number" id="tx-amount-input" required placeholder="VD: 50000" 
+            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-mono text-base font-bold">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-400 mb-1">Chọn Ví</label>
+            <select id="tx-wallet-select" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white"></select>
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Danh mục</label>
+            <select id="tx-category-select" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white"></select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-slate-400 mb-1">Ngày giao dịch</label>
+          <input type="date" id="tx-date-input" required class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white">
+        </div>
+
+        <div>
+          <label class="block text-slate-400 mb-1">Ghi chú chi tiết</label>
+          <input type="text" id="tx-note-input" placeholder="VD: Ăn sáng phở bò, Mua quà sinh nhật..." 
+            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white">
+        </div>
+
+        <button type="submit" class="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition-all shadow-md shadow-indigo-600/30">
+          Lưu Giao Dịch
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Add Task -->
+  <div id="modal-task" class="modal-backdrop fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+    <div class="glass-panel w-full max-w-md p-6 rounded-3xl border border-slate-700/60 shadow-2xl relative">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-extrabold text-base text-slate-900 dark:text-white">Thêm Công Việc Mới</h3>
+        <button class="btn-close-modal p-2 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-slate-800">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <form onsubmit="LifeApp.saveTaskForm(event)" class="space-y-4 text-xs font-semibold">
+        <div>
+          <label class="block text-slate-400 mb-1">Tên công việc</label>
+          <input type="text" id="task-title-input" required placeholder="VD: Nộp báo cáo tài chính..." 
+            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-400 mb-1">Hạn chót</label>
+            <input type="date" id="task-date-input" required class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white">
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Mức độ ưu tiên</label>
+            <select id="task-priority-select" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white">
+              <option value="urgent_important">Khẩn cấp & Quan trọng</option>
+              <option value="important">Quan trọng (Lên lịch)</option>
+              <option value="urgent">Khẩn cấp (Ủy quyền)</option>
+              <option value="normal">Bình thường</option>
+            </select>
+          </div>
+        </div>
+        <button type="submit" class="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition-all shadow-md shadow-indigo-600/30">
+          Thêm việc
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Add Bill -->
+  <div id="modal-bill" class="modal-backdrop fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+    <div class="glass-panel w-full max-w-md p-6 rounded-3xl border border-slate-700/60 shadow-2xl relative">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-extrabold text-base text-slate-900 dark:text-white">Thêm Hóa Đơn Định Kỳ</h3>
+        <button class="btn-close-modal p-2 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-slate-800">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <form onsubmit="LifeApp.saveBillForm(event)" class="space-y-4 text-xs font-semibold">
+        <div>
+          <label class="block text-slate-400 mb-1">Tên hóa đơn</label>
+          <input type="text" id="bill-title-input" required placeholder="VD: Tiền điện EVN, Internet Viettel, Thẻ tín dụng..." 
+            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-400 mb-1">Số tiền ước tính (₫)</label>
+            <input type="number" id="bill-amount-input" required placeholder="VD: 500000" 
+              class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-mono">
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Ngày đến hạn hàng tháng</label>
+            <input type="number" id="bill-dueday-input" min="1" max="31" value="15" required 
+              class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-mono">
+          </div>
+        </div>
+        <button type="submit" class="w-full py-3 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold transition-all shadow-md shadow-amber-600/30">
+          Lưu Hóa Đơn
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Add Habit -->
+  <div id="modal-habit" class="modal-backdrop fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+    <div class="glass-panel w-full max-w-md p-6 rounded-3xl border border-slate-700/60 shadow-2xl relative">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-extrabold text-base text-slate-900 dark:text-white">Thêm Thói Quen Mới</h3>
+        <button class="btn-close-modal p-2 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-slate-800">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <form onsubmit="LifeApp.saveHabitForm(event)" class="space-y-4 text-xs font-semibold">
+        <div>
+          <label class="block text-slate-400 mb-1">Tên thói quen</label>
+          <input type="text" id="habit-title-input" required placeholder="VD: Uống 2L nước, Chạy bộ 5km, Đọc sách..." 
+            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white">
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1">Biểu tượng</label>
+          <select id="habit-icon-select" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white">
+            <option value="droplets">💧 Uống nước</option>
+            <option value="dumbbell">💪 Tập thể dục / Gym</option>
+            <option value="book-open">📖 Đọc sách</option>
+            <option value="moon">🌙 Ngủ sớm</option>
+            <option value="sparkles">✨ Thiền / Tĩnh tâm</option>
+            <option value="heart-pulse">❤️ Sức khỏe</option>
+          </select>
+        </div>
+        <button type="submit" class="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition-all shadow-md shadow-indigo-600/30">
+          Tạo Thói Quen
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Add Note -->
+  <div id="modal-note" class="modal-backdrop fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+    <div class="glass-panel w-full max-w-md p-6 rounded-3xl border border-slate-700/60 shadow-2xl relative">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-extrabold text-base text-slate-900 dark:text-white">Viết Ghi Chú Mới</h3>
+        <button class="btn-close-modal p-2 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-slate-800">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <form onsubmit="LifeApp.saveNoteForm(event)" class="space-y-4 text-xs font-semibold">
+        <div>
+          <label class="block text-slate-400 mb-1">Tiêu đề ghi chú</label>
+          <input type="text" id="note-title-input" placeholder="VD: Ý tưởng dự án, Kế hoạch tuần..." 
+            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-bold">
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1">Nội dung chi tiết</label>
+          <textarea id="note-content-input" rows="5" placeholder="Ghi lại suy nghĩ hoặc danh sách việc..." 
+            class="w-full p-3.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white"></textarea>
+        </div>
+        <button type="submit" class="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition-all shadow-md shadow-indigo-600/30">
+          Lưu Ghi Chú
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Add Shopping Item -->
+  <div id="modal-shopping" class="modal-backdrop fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+    <div class="glass-panel w-full max-w-md p-6 rounded-3xl border border-slate-700/60 shadow-2xl relative">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-extrabold text-base text-slate-900 dark:text-white">Thêm Đồ Cần Mua</h3>
+        <button class="btn-close-modal p-2 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-slate-800">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <form onsubmit="LifeApp.saveShoppingForm(event)" class="space-y-4 text-xs font-semibold">
+        <div>
+          <label class="block text-slate-400 mb-1">Tên món đồ</label>
+          <input type="text" id="shop-name-input" required placeholder="VD: Sữa tươi, Trứng gà, Dầu ăn..." 
+            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-400 mb-1">Số lượng / Quy cách</label>
+            <input type="text" id="shop-qty-input" value="1" placeholder="1 hộp, 2kg..." 
+              class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white">
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Ước tính giá (₫)</label>
+            <input type="number" id="shop-price-input" placeholder="0" 
+              class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-mono">
+          </div>
+        </div>
+        <button type="submit" class="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition-all shadow-md shadow-indigo-600/30">
+          Thêm Món
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Hidden File Inputs -->
+  <input type="file" id="backup-file-input" accept=".enc" class="hidden">
+  <input type="file" id="statement-file-input" accept=".xlsx,.xls,.csv" class="hidden">
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="fixed top-5 right-5 z-50 space-y-2 pointer-events-none max-w-sm w-full"></div>
+
+  <!-- Application Logic Modules -->
+  <script src="js/crypto.js"></script>
+  <script src="js/parser.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/app.js"></script>
+
+  <!-- PWA Service Worker Registration -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(reg => console.log('LifeOS Service Worker registered:', reg.scope))
+          .catch(err => console.log('Service Worker registration skipped:', err));
+      });
+    }
+  </script>
+</body>
+</html>

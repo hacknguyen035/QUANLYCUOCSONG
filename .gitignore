@@ -1,0 +1,52 @@
+# ==============================================================================
+# BẢO MẬT DỮ LIỆU CÁ NHÂN & TÀI CHÍNH (TUYỆT ĐỐI KHÔNG COMMIT LÊN GITHUB)
+# ==============================================================================
+
+# Dữ liệu xuất sao lưu đã mã hóa hoặc file json dữ liệu cá nhân
+*.enc
+*.enc.json
+*.json
+!manifest.json
+!package.json
+!package-lock.json
+
+# File sao kê ngân hàng & bảng tính cá nhân
+*.csv
+*.xlsx
+*.xls
+*.xlsm
+*.tsv
+*.ods
+
+# File cấu hình bí mật & biến môi trường
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.cert
+
+# File tạm & logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE & Editor files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+
+# Temporary directories
+tmp/
+temp/
+backup/
+backups/
+export/
+imports/

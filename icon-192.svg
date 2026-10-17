@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4f46e5"/>
+      <stop offset="50%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#10b981"/>
+    </linearGradient>
+    <linearGradient id="glowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Outer Rounded Square -->
+  <rect x="8" y="8" width="176" height="176" rx="44" fill="url(#bgGrad)" />
+  <rect x="8" y="8" width="176" height="88" rx="44" fill="url(#glowGrad)" />
+
+  <!-- Shield and Check / Sparkle Path -->
+  <path d="M96 36 L144 56 V96 C144 126 123 152 96 160 C69 152 48 126 48 96 V56 Z" 
+        fill="#ffffff" 
+        fill-opacity="0.18" 
+        stroke="#ffffff" 
+        stroke-width="4" 
+        stroke-linejoin="round" />
+
+  <!-- Central "L" + Sparkle / Coin accent -->
+  <path d="M80 66 V126 H116" 
+        fill="none" 
+        stroke="#ffffff" 
+        stroke-width="12" 
+        stroke-linecap="round" 
+        stroke-linejoin="round" />
+
+  <!-- Sparkle Star in top right of shield -->
+  <polygon points="120,70 123,78 131,81 123,84 120,92 117,84 109,81 117,78" fill="#fbbf24"/>
+</svg>

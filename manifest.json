@@ -1,0 +1,35 @@
+{
+  "name": "LifeOS - Quản lý Đời sống & Tài chính Toàn diện",
+  "short_name": "LifeOS",
+  "description": "Ứng dụng Quản lý Đời sống & Tài chính Cá nhân Toàn diện, bảo mật AES-GCM 256-bit",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#4f46e5",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "icons/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["finance", "productivity", "lifestyle"],
+  "share_target": {
+    "action": "./index.html",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "sms",
+      "url": "url"
+    }
+  }
+}

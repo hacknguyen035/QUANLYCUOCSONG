@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad512" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4f46e5"/>
+      <stop offset="50%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#10b981"/>
+    </linearGradient>
+    <linearGradient id="glowGrad512" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Outer Rounded Square -->
+  <rect x="24" y="24" width="464" height="464" rx="112" fill="url(#bgGrad512)" />
+  <rect x="24" y="24" width="464" height="232" rx="112" fill="url(#glowGrad512)" />
+
+  <!-- Shield Shape -->
+  <path d="M256 96 L384 148 V256 C384 336 328 404 256 426 C184 404 128 336 128 256 V148 Z" 
+        fill="#ffffff" 
+        fill-opacity="0.18" 
+        stroke="#ffffff" 
+        stroke-width="10" 
+        stroke-linejoin="round" />
+
+  <!-- Central "L" Monogram -->
+  <path d="M214 176 V336 H308" 
+        fill="none" 
+        stroke="#ffffff" 
+        stroke-width="32" 
+        stroke-linecap="round" 
+        stroke-linejoin="round" />
+
+  <!-- Sparkle Star -->
+  <polygon points="320,186 328,206 350,214 328,222 320,242 312,222 290,214 312,206" fill="#fbbf24"/>
+</svg>
